@@ -14,6 +14,7 @@ frontend/.env.local
 
 # Local runtime artifacts
 backend/fage_alerts.db
+fage_alerts.db
 backend/data/*.csv
 
 # OS
