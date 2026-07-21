@@ -1,0 +1,52 @@
+{
+  "registry_version": "1.0",
+  "purpose": "Formal record of every model architecture evaluated for FAGE, including those rejected, with the evidence behind each decision. Maintained so any reviewer can audit not just what was shipped, but what was tried and why it didn't make the cut.",
+  "primary_model": {
+    "name": "XGBoost",
+    "status": "SELECTED",
+    "evidence": "5-fold stratified cross-validation: precision 0.901 +/- 0.093, recall 0.839 +/- 0.051, ROC-AUC 0.988 +/- 0.013. Selected after head-to-head comparison against four alternatives on identical, correctly-prepared data."
+  },
+  "rejected_or_secondary_models": [
+    {
+      "name": "Graph Community Detection (Louvain)",
+      "status": "NOT BUILT — rejected at the data-feasibility stage, not the performance stage",
+      "evidence": "Every non-numeric column in the provided dataset was audited directly. None represent device IDs, IP addresses, or beneficiary/counterparty identifiers — the dataset contains no relational or transactional link data of any kind. A graph model requires edges; this dataset provides none. This is a data limitation, not a modeling failure, and no amount of engineering effort changes it without a different dataset from the organizers.",
+      "would_reconsider_if": "Organizers provide account-linkage data (shared device/IP/beneficiary identifiers) in a future data release."
+    },
+    {
+      "name": "Isolation Forest (unsupervised anomaly detector)",
+      "status": "BUILT, TESTED, REMOVED FROM PRODUCTION",
+      "evidence": "Initially included as a parallel unsupervised signal. Direct measurement of its true ranking AUC (via score_samples(), not the model's own reporting) showed 0.326 \u2014 worse than random, and anti-correlated with real fraud in this feature space. Root cause: the supervised feature-selection step chooses features specifically because they make fraud a coherent, dense cluster, which is the opposite of the diffuse-outlier assumption Isolation Forest depends on. It was also found to be driving a live compliance override rule that force-escalated ~1.8% of legitimate accounts to 'High' severity based on this backwards signal. Removed entirely from training and serving after this was discovered.",
+      "would_reconsider_if": "A genuinely unsupervised, non-fraud-selected feature space were used specifically for anomaly detection, separate from the supervised feature set."
+    },
+    {
+      "name": "RandomForest",
+      "status": "KEPT AS SECONDARY / COMPARISON MODEL, NOT PRIMARY",
+      "evidence": "With class_weight='balanced' (replacing an earlier SMOTE-based approach that capped precision at 0.44), precision reaches 0.905 but only at recall 0.594 \u2014 a hard cliff exists in its probability distribution: at threshold 0.45, precision=0.731/recall=0.594; at 0.50, precision jumps to 0.905 while recall stays flat. Exhaustive threshold sweep (0.10 to 0.95 in steps of 0.05) found no operating point where both precision and recall exceed 0.80 simultaneously.",
+      "would_reconsider_if": "More positive examples were available to smooth the probability distribution around this cliff."
+    },
+    {
+      "name": "ExtraTrees",
+      "status": "TESTED, REJECTED AS A CANDIDATE PRIMARY MODEL",
+      "evidence": "With class_weight='balanced', precision improved from 0.22 to 0.47 \u2014 a real improvement, still far short of a usable operating point. Exhaustive threshold sweep found no point where both precision and recall exceed 0.80; best simultaneous point was precision 0.46 / recall 0.63. This is architectural: ExtraTrees selects split thresholds randomly rather than searching for the best one, which is the source of its variance-reduction benefit in general but is a poor fit for a sparse, weak signal spread across correlated features.",
+      "would_reconsider_if": "Not expected to close this gap through further tuning \u2014 the randomized-split mechanism itself is the limiting factor, not the hyperparameters."
+    },
+    {
+      "name": "Logistic Regression",
+      "status": "TESTED, REJECTED AS A CANDIDATE PRIMARY MODEL",
+      "evidence": "Tested under three configurations: (1) original SMOTE + L1/liblinear (precision 0.11-0.13); (2) class_weight='balanced' + L2/lbfgs (precision worse, 0.04-0.07, and failed to converge in 2000 iterations); (3) RobustScaler + collinearity reduction (297\u2192101 features) + class_weight + full threshold sweep (precision capped at 0.205 across every threshold tested, still non-convergent). A linear decision boundary cannot separate a signal that lives in nonlinear feature interactions across thousands of correlated columns \u2014 this is a property of the algorithm on this data, not an under-tuned configuration.",
+      "would_reconsider_if": "Not expected to become viable on this feature set regardless of further tuning."
+    }
+  ],
+  "methodology_bugs_found_and_fixed_during_validation": [
+    "Categorical string columns crashed XGBoost/LightGBM training entirely on the real dataset (never occurred on synthetic fallback data used during initial development).",
+    "A stray pandas index column ('Unnamed: 0') crashed LightGBM specifically due to a colon in the auto-generated column name.",
+    "A raw-variance feature filter was scale-biased, discarding small-scale-but-informative columns; fixed via percentile-normalized variance after an initial min-max-normalized attempt was found to be outlier-biased and discarded even stronger signal.",
+    "A mutual-information pre-filter cutoff (top 40 candidates) was discarding genuinely strong, independent predictors due to estimator noise near the cutoff boundary; widening it to 400 candidates improved cross-validated XGBoost precision from 0.85 to 0.90.",
+    "RFECV hung indefinitely (20+ minutes, no completion) on collinear feature sets due to its default L1/liblinear estimator; root-caused to liblinear's coordinate descent being ill-conditioned on features correlated at 0.94-0.98, and fixed by switching to a tree-based RFECV estimator.",
+    "SHAP explanations were silently degrading to a fallback calculation on every single live prediction, root-caused to (a) SHAP's newer API needing feature_perturbation='tree_path_dependent' for this model configuration, and (b) a case-sensitivity bug ('XGBOOST' vs 'XGBoost') that was silently routing every real prediction to the wrong explainer code path regardless of the first fix.",
+    "The live scoring endpoint did not apply the same categorical encoding as training, silently substituting background-mean values for every real categorical input; fixed by routing live predictions through the actual fitted preprocessor instead of a hand-rolled float() conversion.",
+    "An unauthenticated API endpoint allowed unlimited LLM-backed SAR report generation without an API key; fixed by adding the same auth dependency used on every other endpoint.",
+    "A model-loading fallback path incorrectly reported the system as production-ready even when serving mock predictions; fixed so degraded-mode is now correctly surfaced to callers instead of silently masked."
+  ]
+}

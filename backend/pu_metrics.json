@@ -1,0 +1,7 @@
+{
+  "c_estimate": 0.8390018691590629,
+  "spy_threshold": 0.105,
+  "reliable_negatives_count": 781,
+  "overall_c_estimate": 0.8390018691590629,
+  "last_tuning_timestamp": "2026-07-21T07:29:08.475429+00:00Z"
+}

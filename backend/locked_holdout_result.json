@@ -1,0 +1,20 @@
+{
+  "locked_seed": 999,
+  "locked_set_size": 1817,
+  "locked_set_positives": 16,
+  "precision": 0.9090909090909091,
+  "recall": 0.625,
+  "f1": 0.7407407407407407,
+  "roc_auc": 0.9905260966129927,
+  "confusion_matrix": [
+    [
+      1800,
+      1
+    ],
+    [
+      6,
+      10
+    ]
+  ],
+  "note": "This evaluation was run exactly once against a holdout set carved out with a random seed never used in any prior experiment in this project. No further tuning occurred after seeing this result."
+}

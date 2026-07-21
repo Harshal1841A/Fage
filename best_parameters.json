@@ -1,0 +1,42 @@
+{
+    "XGBoost": {
+        "n_estimators": 100,
+        "max_depth": 4,
+        "learning_rate": 0.1,
+        "eval_metric": "logloss",
+        "scale_pos_weight": 17.75
+    },
+    "LightGBM": {
+        "n_estimators": 100,
+        "max_depth": 5,
+        "learning_rate": 0.1,
+        "num_leaves": 31,
+        "verbose": -1,
+        "scale_pos_weight": 17.75
+    },
+    "RandomForest": {
+        "n_estimators": 100,
+        "max_depth": 8,
+        "min_samples_split": 5,
+        "class_weight": "balanced"
+    },
+    "ExtraTrees": {
+        "n_estimators": 100,
+        "max_depth": 8,
+        "min_samples_split": 5,
+        "class_weight": "balanced"
+    },
+    "LogisticRegression": {
+        "C": 0.1,
+        "penalty": "l1",
+        "solver": "liblinear"
+    },
+    "Ensemble": {
+        "voting": "soft",
+        "estimators": [
+            "XGBoost",
+            "LightGBM",
+            "RandomForest"
+        ]
+    }
+}

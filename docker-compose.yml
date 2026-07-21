@@ -1,0 +1,43 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fage-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - FAGE_API_KEY=fage-demo-key-2026
+      - FAGE_JWT_SECRET=${FAGE_JWT_SECRET:-fage-dev-jwt-secret-change-in-production}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
+      - DATABASE_URL=sqlite:////app/data/fage_alerts.db
+    volumes:
+      - ./backend/models:/app/models:ro
+      - fage-db:/app/data
+    networks:
+      - fage-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fage-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - fage-network
+
+volumes:
+  fage-db:
+
+networks:
+  fage-network:
+    driver: bridge

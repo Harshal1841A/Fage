@@ -1,0 +1,6 @@
+{
+    "sanctioned_countries": ["IR", "KP", "SY", "SD", "CU"],
+    "amount_threshold": 150000.0,
+    "new_account_max_days": 7.0,
+    "new_account_transfer_threshold": 25000.0
+}

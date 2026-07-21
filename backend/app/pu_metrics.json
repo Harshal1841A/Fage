@@ -1,0 +1,12 @@
+{
+  "overall_c_estimate": 0.4839178020266258,
+  "c_estimate": 0.4839178020266258,
+  "spy_threshold": 0.01,
+  "closed_loop_feedback_counts": {
+    "True Positive": 11,
+    "False Positive": 0,
+    "Mule Ring": 0,
+    "Other": 0
+  },
+  "last_recalibration_timestamp": "2026-07-19T16:18:58.159589+00:00Z"
+}

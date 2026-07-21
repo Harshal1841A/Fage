@@ -1,0 +1,20 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Secrets
+backend/.env
+frontend/.env.local
+
+# Local runtime artifacts
+backend/fage_alerts.db
+backend/data/*.csv
+
+# OS
+.DS_Store
