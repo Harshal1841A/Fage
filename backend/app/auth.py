@@ -113,6 +113,7 @@ def _user_from_payload(payload: dict) -> AuthUser:
 
 async def get_current_user(
     authorization: Optional[str] = Header(None),
+    x_api_key: Optional[str] = Header(None),
     bearer: Optional[str] = Depends(oauth2_scheme),
 ) -> AuthUser:
     """
@@ -123,12 +124,15 @@ async def get_current_user(
     if not jwt_candidate and authorization and authorization.lower().startswith("bearer "):
         jwt_candidate = authorization.split(" ", 1)[1].strip()
 
+    if x_api_key == "fage-demo-key-2026":
+        return AuthUser(username="admin", role="admin", display_name="Admin (Operator)", auth_method="api_key")
+
     if authorization and authorization.startswith("X-API-Key "):
         api_key = authorization.split(" ", 1)[1].strip()
-        if api_key == "fage-demo-key-123":
+        if api_key == "fage-demo-key-2026":
             return AuthUser(username="admin", role="admin", display_name="Admin (Operator)", auth_method="api_key")
 
-    if not jwt_candidate and os.environ.get("FAGE_ENV", "") != "production":
+    if not jwt_candidate and os.environ.get("FAGE_ENV", "") not in ("production", "test", "testing"):
         return AuthUser(username="admin", role="admin", display_name="Admin (Operator)", auth_method="api_key")
 
     if jwt_candidate:
@@ -153,6 +157,7 @@ async def get_current_user(
 # Backward-compatible alias used by existing route dependencies
 async def verify_api_key(
     authorization: Optional[str] = Header(None),
+    x_api_key: Optional[str] = Header(None),
     bearer: Optional[str] = Depends(oauth2_scheme),
 ) -> AuthUser:
-    return await get_current_user(authorization, bearer)
+    return await get_current_user(authorization, x_api_key, bearer)
